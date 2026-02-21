@@ -3,40 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>G.works ネットワーク可視化</title>
+<title>G.works ネットワーク可視化 - とり小屋</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Share+Tech+Mono&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0a0e1a;
+    background: #ffffff;
     font-family: 'Noto Sans JP', sans-serif;
     overflow: hidden; height: 100vh; width: 100vw;
   }
   canvas { position: absolute; top: 0; left: 0; }
-  .header { position: absolute; top: 20px; left: 24px; pointer-events: none; }
+  .header { position: absolute; top: 20px; left: 24px; pointer-events: none; z-index: 10; }
   .logo {
     font-family: 'Share Tech Mono', monospace; font-size: 28px; font-weight: 700;
-    color: #f5a623; letter-spacing: 2px; text-shadow: 0 0 20px rgba(245,166,35,0.6);
+    color: #1E88E5; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(30,136,229,0.3);
   }
-  .subtitle { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 3px; margin-top: 2px; font-weight: 300; }
-  .legend { position: absolute; bottom: 24px; left: 24px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,0.5); font-family: 'Share Tech Mono', monospace; }
+  .subtitle { font-size: 11px; color: #1a1a1a; letter-spacing: 3px; margin-top: 2px; font-weight: 300; }
+  .legend { position: absolute; bottom: 24px; left: 24px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; z-index: 10; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #1a1a1a; font-family: 'Share Tech Mono', monospace; }
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .stats { position: absolute; top: 20px; right: 24px; text-align: right; font-family: 'Share Tech Mono', monospace; pointer-events: none; }
-  .stat-row { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
-  .stat-val { color: #f5a623; font-size: 14px; }
-  .speed-control { position: absolute; bottom: 24px; right: 24px; display: flex; gap: 8px; align-items: center; }
+  .stats { position: absolute; top: 20px; right: 24px; text-align: right; font-family: 'Share Tech Mono', monospace; pointer-events: none; z-index: 10; }
+  .stat-row { font-size: 11px; color: #1a1a1a; margin-bottom: 4px; }
+  .stat-val { color: #FF9800; font-size: 14px; }
+  .speed-control { position: absolute; bottom: 24px; right: 24px; display: flex; gap: 8px; align-items: center; z-index: 10; }
   .speed-btn {
-    background: rgba(245,166,35,0.15); border: 1px solid rgba(245,166,35,0.3);
-    color: #f5a623; padding: 6px 14px; border-radius: 4px; cursor: pointer;
+    background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.3);
+    color: #FF9800; padding: 6px 14px; border-radius: 4px; cursor: pointer;
     font-family: 'Share Tech Mono', monospace; font-size: 12px; transition: all 0.2s;
   }
-  .speed-btn:hover { background: rgba(245,166,35,0.3); }
-  .speed-btn.active { background: rgba(245,166,35,0.4); border-color: #f5a623; box-shadow: 0 0 10px rgba(245,166,35,0.3); }
+  .speed-btn:hover { background: rgba(255,152,0,0.2); }
+  .speed-btn.active { background: rgba(255,152,0,0.3); border-color: #FF9800; box-shadow: 0 2px 8px rgba(255,152,0,0.3); }
 </style>
 </head>
 <body>
 <canvas id="bg"></canvas>
+<canvas id="torikoya"></canvas>
 <canvas id="main"></canvas>
 
 <div class="header">
@@ -44,35 +45,44 @@
   <div class="subtitle">NPO法人 伝三郎商会 ／ 求貨求車マッチング</div>
 </div>
 <div class="stats">
+  <div class="stat-row">ネットワーク数 <span class="stat-val" id="stat-torikoya">5</span></div>
+  <div class="stat-row">総拠点数 <span class="stat-val" id="stat-bases">0</span></div>
   <div class="stat-row">マッチング完了 <span class="stat-val" id="stat-match">0</span></div>
   <div class="stat-row">稼働中トラック <span class="stat-val" id="stat-trucks">0</span></div>
   <div class="stat-row">オファー中 <span class="stat-val" id="stat-offers">0</span></div>
 </div>
 <div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#f5a623;box-shadow:0 0 6px #f5a623"></div> T：空きトラック</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#00d4ff;box-shadow:0 0 6px #00d4ff"></div> 荷主オファー</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#7cfc00;box-shadow:0 0 6px #7cfc00"></div> ダン（マッチング完了）</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#ff6b9d;box-shadow:0 0 6px #ff6b9d"></div> もっと（価格交渉）</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1E88E5;box-shadow:0 0 6px #1E88E5"></div> T：空きトラック</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FF9800;box-shadow:0 0 6px #FF9800"></div> 荷主オファー</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FF9800;box-shadow:0 0 6px #FF9800"></div> ダン（マッチング完了）</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FF9800;box-shadow:0 0 6px #FF9800"></div> もっと（価格交渉）</div>
   <div class="legend-item"><div class="legend-dot" style="background:#a78bfa;box-shadow:0 0 6px #a78bfa"></div> Flying Pallet</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(30,136,229,0.3);border:2px solid #1E88E5"></div> 🏠 とり小屋配送エリア</div>
 </div>
 <div class="speed-control">
-  <span style="font-family:'Share Tech Mono';font-size:11px;color:rgba(255,255,255,0.4)">速度</span>
+  <span style="font-family:'Share Tech Mono';font-size:11px;color:#1a1a1a">速度</span>
   <button class="speed-btn active" onclick="setSpeed(1)" id="spd1">×1</button>
   <button class="speed-btn" onclick="setSpeed(2)" id="spd2">×2</button>
   <button class="speed-btn" onclick="setSpeed(3)" id="spd3">×3</button>
 </div>
 
+<div id="clickHint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Noto Sans JP';font-size:16px;color:#FF9800;text-shadow:0 2px 8px rgba(255,152,0,0.4);pointer-events:none;z-index:20;opacity:0;transition:opacity 0.5s;">
+  💡 画面をクリックで拠点を追加できます
+</div>
+
 <script>
 const bgCanvas = document.getElementById('bg');
+const torikoyaCanvas = document.getElementById('torikoya');
 const canvas = document.getElementById('main');
 const bgCtx = bgCanvas.getContext('2d');
+const tkCtx = torikoyaCanvas.getContext('2d');
 const ctx = canvas.getContext('2d');
 let W, H;
 
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
-  bgCanvas.width = canvas.width = W;
-  bgCanvas.height = canvas.height = H;
+  bgCanvas.width = torikoyaCanvas.width = canvas.width = W;
+  bgCanvas.height = torikoyaCanvas.height = canvas.height = H;
   drawBg();
 }
 
@@ -84,42 +94,499 @@ function setSpeed(s) {
 
 const ROADS = [];
 function buildRoads() {
-  const cols=6, rows=5, px=W/(cols+1), py=H/(rows+1);
+  const cols=10, rows=8, px=W/(cols+1), py=H/(rows+1);
   for(let r=0;r<=rows;r++) ROADS.push({x1:0,y1:py*(r+0.5),x2:W,y2:py*(r+0.5)});
   for(let c=0;c<=cols;c++) ROADS.push({x1:px*(c+0.5),y1:0,x2:px*(c+0.5),y2:H});
 }
 
 let shippers = [];
+let torikoyaGroups = [];
+
+// 新エリア（クリックで追加される）
+let newArea = {
+  name: '新エリア',
+  shipperIds: [],
+  maxShippers: 5,
+  color: 'rgba(255,152,0,0.18)',
+  borderColor: 'rgba(255,152,0,0.9)',
+  joinFlash: 0,
+  strength: 0,
+};
+
+function buildTorikoyaGroups() {
+  // 全拠点リスト（最終形）
+  const finalShipperIds = [
+    [0, 1, 7, 12],      // 東京
+    [2, 5, 8, 13],      // 埼玉
+    [3, 9, 14],         // 千葉
+    [4, 10, 15],        // 神奈川
+    [6, 11, 16, 17],    // 群馬
+  ];
+
+  torikoyaGroups = [
+    {
+      id: 0,
+      name: '東京エリア',
+      shipperIds: [0, 1],  // 最初は2拠点
+      finalShipperIds: finalShipperIds[0],
+      color: 'rgba(30,136,229,0.18)',
+      borderColor: 'rgba(30,136,229,0.9)',
+      joinFlash: 0, strength: 0,
+    },
+    {
+      id: 1,
+      name: '埼玉エリア',
+      shipperIds: [2, 5],
+      finalShipperIds: finalShipperIds[1],
+      color: 'rgba(30,136,229,0.18)',
+      borderColor: 'rgba(30,136,229,0.9)',
+      joinFlash: 0, strength: 0,
+    },
+    {
+      id: 2,
+      name: '千葉エリア',
+      shipperIds: [3],
+      finalShipperIds: finalShipperIds[2],
+      color: 'rgba(30,136,229,0.18)',
+      borderColor: 'rgba(30,136,229,0.9)',
+      joinFlash: 0, strength: 0,
+    },
+    {
+      id: 3,
+      name: '神奈川エリア',
+      shipperIds: [4, 10],
+      finalShipperIds: finalShipperIds[3],
+      color: 'rgba(30,136,229,0.18)',
+      borderColor: 'rgba(30,136,229,0.9)',
+      joinFlash: 0, strength: 0,
+    },
+    {
+      id: 4,
+      name: '群馬エリア',
+      shipperIds: [6, 11],
+      finalShipperIds: finalShipperIds[4],
+      color: 'rgba(30,136,229,0.18)',
+      borderColor: 'rgba(30,136,229,0.9)',
+      joinFlash: 0, strength: 0,
+    },
+  ];
+
+  // 拠点を順次追加していく
+  torikoyaGroups.forEach((tg, i) => {
+    const remainingIds = tg.finalShipperIds.filter(id => !tg.shipperIds.includes(id));
+    remainingIds.forEach((shipperId, j) => {
+      setTimeout(() => {
+        tg.shipperIds.push(shipperId);
+        tg.joinFlash = 50;
+        // 控えめなパーティクル
+        const sh = shippers.find(s => s.id === shipperId);
+        if(sh) {
+          for(let k=0; k<2; k++) {
+            particles.push(new Particle(sh.x, sh.y, tg.borderColor.split(',')[0].replace('rgba(', 'rgb(') + ')'));
+          }
+        }
+      }, (i * 3000 + j * 2500) / SPEED);
+    });
+  });
+}
+
 function buildShippers() {
   const pos=[
-    {x:0.18,y:0.25,name:'東京工場'},{x:0.65,y:0.18,name:'埼玉倉庫'},
-    {x:0.82,y:0.55,name:'千葉港'},{x:0.35,y:0.72,name:'川越DC'},
-    {x:0.55,y:0.45,name:'大宮HUB'},{x:0.12,y:0.62,name:'所沢工場'},
+    {x:0.15,y:0.25,name:'東京工場'},      // 東京エリア - 左上
+    {x:0.22,y:0.45,name:'品川倉庫'},      // 東京エリア - 左中
+    {x:0.45,y:0.20,name:'さいたま工場'},  // 埼玉エリア - 中央上
+    {x:0.72,y:0.38,name:'千葉港'},        // 千葉エリア - 右中
+    {x:0.25,y:0.65,name:'横浜DC'},        // 神奈川エリア - 左中下
+    {x:0.52,y:0.32,name:'所沢工場'},      // 埼玉エリア - 中央
+    {x:0.62,y:0.12,name:'高崎工場'},      // 群馬エリア - 右上
+    {x:0.12,y:0.50,name:'多摩センター'},  // 東京エリア - 左中
+    {x:0.48,y:0.48,name:'川越DC'},        // 埼玉エリア - 中央
+    {x:0.85,y:0.25,name:'成田空港'},      // 千葉エリア - 右上
+    {x:0.32,y:0.75,name:'川崎HUB'},       // 神奈川エリア - 左下
+    {x:0.72,y:0.08,name:'前橋倉庫'},      // 群馬エリア - 右上
+    {x:0.28,y:0.32,name:'新宿DC'},        // 東京エリア - 左上
+    {x:0.42,y:0.58,name:'大宮HUB'},       // 埼玉エリア - 中央下
+    {x:0.78,y:0.65,name:'館山港'},        // 千葉エリア - 右下
+    {x:0.58,y:0.68,name:'町田工場'},      // 神奈川エリア - 中央下
+    {x:0.82,y:0.18,name:'伊勢崎DC'},      // 群馬エリア - 右上
+    {x:0.68,y:0.28,name:'熊谷倉庫'},      // 群馬エリア - 右中
   ];
   shippers = pos.map((p,i) => ({
     id:i, x:p.x*W, y:p.y*H, name:p.name,
     pulse:Math.random()*Math.PI*2,
-    offerTimer:60+i*30+Math.random()*80,
+    offerTimer:60+i*20+Math.random()*80,
     hasOffer:false, offer:null,
-    bidderIds:[],   // ビッド中トラックID一覧
-    winnerId:null,  // 選ばれたID
-    calloutAlpha:0, // 吹き出しフェード
-    danFlash:0,     // ダン演出カウンタ
+    bidderIds:[], winnerId:null, calloutAlpha:0, danFlash:0,
   }));
+}
+
+// スライム状の輪郭描画（A案：個別輪郭を保持）
+function drawTorikoya(tg) {
+  if(tg.joinFlash > 0) tg.joinFlash -= SPEED;
+
+  const points = tg.shipperIds.map(id => shippers.find(s => s.id === id)).filter(Boolean);
+  if(points.length === 0) return;
+
+  // 配送範囲を大きく設定
+  const padding = 130 + tg.strength * 40;
+  
+  // 1拠点の場合は円形で描画
+  if(points.length === 1) {
+    drawSinglePointArea(points[0], padding, tg);
+    return;
+  }
+  
+  // 2拠点の場合は楕円形で描画
+  if(points.length === 2) {
+    drawTwoPointArea(points[0], points[1], padding, tg);
+    return;
+  }
+  
+  tkCtx.save();
+
+  // スライム形状を描画
+  drawStableSlimeShape(points, padding, tg);
+
+  tkCtx.restore();
+
+  // 利用で強化
+  if(Math.random() < 0.002 * SPEED) {
+    tg.strength = Math.min(1, tg.strength + 0.03);
+  }
+}
+
+// 1拠点の場合は円形で描画
+function drawSinglePointArea(point, padding, tg) {
+  tkCtx.save();
+  
+  const radius = padding + 20;
+  
+  // 拠点追加フラッシュ
+  if(tg.joinFlash > 0) {
+    const flashAlpha = (tg.joinFlash / 60) * 0.15;
+    tkCtx.beginPath();
+    tkCtx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+    tkCtx.fillStyle = `rgba(245,166,35,${flashAlpha})`;
+    tkCtx.fill();
+  }
+  
+  // 配送エリアの塗り（グラデーション）
+  const baseAlpha = 0.25 + tg.strength * 0.2;
+  const gradient = tkCtx.createRadialGradient(
+    point.x, point.y, 0,
+    point.x, point.y, radius
+  );
+  gradient.addColorStop(0, tg.color.replace('0.12', String(baseAlpha + 0.15)));
+  gradient.addColorStop(0.7, tg.color.replace('0.12', String(baseAlpha)));
+  gradient.addColorStop(1, tg.color.replace('0.12', '0'));
+  tkCtx.fillStyle = gradient;
+  tkCtx.beginPath();
+  tkCtx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+  tkCtx.fill();
+  
+  // 外周線
+  const lineWidth = 2 + tg.strength * 2.5;
+  const borderAlpha = 0.65 + tg.strength * 0.2;
+  tkCtx.beginPath();
+  tkCtx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+  tkCtx.strokeStyle = tg.borderColor.replace('0.7', String(borderAlpha));
+  tkCtx.lineWidth = lineWidth;
+  tkCtx.shadowColor = 'transparent';
+  tkCtx.shadowBlur = 0;
+  tkCtx.stroke();
+  
+  // 拠点マーカー
+  tkCtx.beginPath();
+  tkCtx.arc(point.x, point.y, 3, 0, Math.PI*2);
+  tkCtx.fillStyle = tg.borderColor;
+  tkCtx.shadowBlur = 0;
+  tkCtx.fill();
+  
+  // ラベル（背景付き）
+  const labelText = `🏠 ${tg.name}`;
+  tkCtx.font = `bold 12px 'Noto Sans JP'`;
+  tkCtx.textAlign = 'center';
+  const labelWidth = tkCtx.measureText(labelText).width;
+  const labelPadding = 8;
+  // 背景
+  tkCtx.fillStyle = 'rgba(255,255,255,0.95)';
+  tkCtx.beginPath();
+  tkCtx.roundRect(point.x - labelWidth/2 - labelPadding, point.y - 14, labelWidth + labelPadding*2, 20, 4);
+  tkCtx.fill();
+  tkCtx.strokeStyle = 'rgba(74,85,104,0.2)';
+  tkCtx.lineWidth = 1;
+  tkCtx.stroke();
+  // 文字
+  tkCtx.fillStyle = '#1a1a1a';
+  tkCtx.shadowBlur = 0;
+  tkCtx.fillText(labelText, point.x, point.y);
+  
+  tkCtx.restore();
+  
+  // 利用で強化
+  if(Math.random() < 0.002 * SPEED) {
+    tg.strength = Math.min(1, tg.strength + 0.03);
+  }
+}
+
+// 2拠点の場合はカプセル型（2つの円+長方形）で描画
+function drawTwoPointArea(point1, point2, padding, tg) {
+  tkCtx.save();
+  
+  // 2点の中心
+  const cx = (point1.x + point2.x) / 2;
+  const cy = (point1.y + point2.y) / 2;
+  
+  // 2点間の角度
+  const dx = point2.x - point1.x;
+  const dy = point2.y - point1.y;
+  const angle = Math.atan2(dy, dx);
+  
+  // 円の半径（固定値で太さを保証）
+  const radius = padding * 0.85;
+  
+  // 拠点追加フラッシュ
+  if(tg.joinFlash > 0) {
+    const flashAlpha = (tg.joinFlash / 60) * 0.15;
+    drawCapsule(point1.x, point1.y, point2.x, point2.y, radius, tkCtx);
+    tkCtx.fillStyle = `rgba(245,166,35,${flashAlpha})`;
+    tkCtx.fill();
+  }
+  
+  // 配送エリアの塗り（グラデーション）
+  const baseAlpha = 0.25 + tg.strength * 0.2;
+  const gradient = tkCtx.createRadialGradient(cx, cy, 0, cx, cy, radius * 2);
+  gradient.addColorStop(0, tg.color.replace('0.12', String(baseAlpha + 0.15)));
+  gradient.addColorStop(0.7, tg.color.replace('0.12', String(baseAlpha)));
+  gradient.addColorStop(1, tg.color.replace('0.12', '0'));
+  tkCtx.fillStyle = gradient;
+  drawCapsule(point1.x, point1.y, point2.x, point2.y, radius, tkCtx);
+  tkCtx.fill();
+  
+  // 外周線
+  const lineWidth = 2 + tg.strength * 2.5;
+  const borderAlpha = 0.65 + tg.strength * 0.2;
+  drawCapsule(point1.x, point1.y, point2.x, point2.y, radius, tkCtx);
+  tkCtx.strokeStyle = tg.borderColor.replace('0.7', String(borderAlpha));
+  tkCtx.lineWidth = lineWidth;
+  tkCtx.shadowColor = 'transparent';
+  tkCtx.shadowBlur = 0;
+  tkCtx.stroke();
+  
+  // 拠点マーカー
+  [point1, point2].forEach(p => {
+    tkCtx.beginPath();
+    tkCtx.arc(p.x, p.y, 3, 0, Math.PI*2);
+    tkCtx.fillStyle = tg.borderColor;
+    tkCtx.shadowBlur = 0;
+    tkCtx.fill();
+  });
+  
+  // ラベル（背景付き）
+  const labelText = `🏠 ${tg.name}`;
+  tkCtx.font = `bold 12px 'Noto Sans JP'`;
+  tkCtx.textAlign = 'center';
+  const labelWidth = tkCtx.measureText(labelText).width;
+  const labelPadding = 8;
+  // 背景
+  tkCtx.fillStyle = 'rgba(255,255,255,0.95)';
+  tkCtx.beginPath();
+  tkCtx.roundRect(cx - labelWidth/2 - labelPadding, cy - 14, labelWidth + labelPadding*2, 20, 4);
+  tkCtx.fill();
+  tkCtx.strokeStyle = 'rgba(74,85,104,0.2)';
+  tkCtx.lineWidth = 1;
+  tkCtx.stroke();
+  // 文字
+  tkCtx.fillStyle = '#1a1a1a';
+  tkCtx.shadowBlur = 0;
+  tkCtx.fillText(labelText, cx, cy);
+  
+  tkCtx.restore();
+  
+  // 利用で強化
+  if(Math.random() < 0.002 * SPEED) {
+    tg.strength = Math.min(1, tg.strength + 0.03);
+  }
+}
+
+// カプセル型（2つの半円+長方形）を描画
+function drawCapsule(x1, y1, x2, y2, radius, ctx) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const angle = Math.atan2(dy, dx);
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  
+  ctx.beginPath();
+  
+  // 始点の半円
+  ctx.arc(x1, y1, radius, angle + Math.PI / 2, angle + Math.PI * 3 / 2);
+  
+  // 上辺
+  ctx.lineTo(
+    x2 + Math.cos(angle + Math.PI * 3 / 2) * radius,
+    y2 + Math.sin(angle + Math.PI * 3 / 2) * radius
+  );
+  
+  // 終点の半円
+  ctx.arc(x2, y2, radius, angle + Math.PI * 3 / 2, angle + Math.PI / 2);
+  
+  // 下辺
+  ctx.lineTo(
+    x1 + Math.cos(angle + Math.PI / 2) * radius,
+    y1 + Math.sin(angle + Math.PI / 2) * radius
+  );
+  
+  ctx.closePath();
+}
+
+function drawStableSlimeShape(points, padding, tg) {
+  // 中心点を計算
+  const center = {
+    x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+    y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+  };
+
+  // 各点から中心への角度でソート
+  const sortedPoints = points.slice().sort((a, b) => {
+    const angleA = Math.atan2(a.y - center.y, a.x - center.x);
+    const angleB = Math.atan2(b.y - center.y, b.x - center.x);
+    return angleA - angleB;
+  });
+
+  // より安定した輪郭点の生成
+  const smoothPoints = [];
+  sortedPoints.forEach((p, i) => {
+    const angle = Math.atan2(p.y - center.y, p.x - center.x);
+    const dist = Math.sqrt((p.x - center.x)**2 + (p.y - center.y)**2);
+    
+    // パディングを追加して外側に広げる
+    const expandedDist = dist + padding;
+    const fx = center.x + Math.cos(angle) * expandedDist;
+    const fy = center.y + Math.sin(angle) * expandedDist;
+    
+    smoothPoints.push({x: fx, y: fy});
+  });
+
+  // 拠点追加フラッシュ
+  if(tg.joinFlash > 0) {
+    const flashAlpha = (tg.joinFlash / 60) * 0.1;
+    tkCtx.beginPath();
+    drawRoundedPolygon(smoothPoints, 20, tkCtx);
+    tkCtx.fillStyle = `rgba(245,166,35,${flashAlpha})`;
+    tkCtx.fill();
+  }
+
+  // 配送エリアの塗り（グラデーション）
+  const baseAlpha = 0.25 + tg.strength * 0.2;
+  tkCtx.beginPath();
+  drawRoundedPolygon(smoothPoints, 20, tkCtx);
+  
+  const gradient = tkCtx.createRadialGradient(
+    center.x, center.y, 0,
+    center.x, center.y, padding * 2
+  );
+  gradient.addColorStop(0, tg.color.replace('0.12', String(baseAlpha + 0.15)));
+  gradient.addColorStop(0.7, tg.color.replace('0.12', String(baseAlpha)));
+  gradient.addColorStop(1, tg.color.replace('0.12', '0'));
+  tkCtx.fillStyle = gradient;
+  tkCtx.fill();
+
+  // 外周線（強化で太くなる）
+  tkCtx.beginPath();
+  drawRoundedPolygon(smoothPoints, 20, tkCtx);
+  const lineWidth = 2 + tg.strength * 2.5;
+  const borderAlpha = 0.65 + tg.strength * 0.2;
+  tkCtx.strokeStyle = tg.borderColor.replace('0.7', String(borderAlpha));
+  tkCtx.lineWidth = lineWidth;
+  tkCtx.shadowColor = 'transparent';
+  tkCtx.shadowBlur = 0;
+  tkCtx.stroke();
+
+  // 拠点マーカー
+  points.forEach(p => {
+    tkCtx.beginPath();
+    tkCtx.arc(p.x, p.y, 3, 0, Math.PI*2);
+    tkCtx.fillStyle = tg.borderColor;
+    tkCtx.shadowBlur = 0;
+    tkCtx.fill();
+  });
+
+  // ラベル（背景付き）
+  const labelText = `🏠 ${tg.name}`;
+  tkCtx.font = `bold 12px 'Noto Sans JP'`;
+  tkCtx.textAlign = 'center';
+  const labelWidth = tkCtx.measureText(labelText).width;
+  const labelPadding = 8;
+  // 背景
+  tkCtx.fillStyle = 'rgba(255,255,255,0.95)';
+  tkCtx.beginPath();
+  tkCtx.roundRect(center.x - labelWidth/2 - labelPadding, center.y - 14, labelWidth + labelPadding*2, 20, 4);
+  tkCtx.fill();
+  tkCtx.strokeStyle = 'rgba(74,85,104,0.2)';
+  tkCtx.lineWidth = 1;
+  tkCtx.stroke();
+  // 文字
+  tkCtx.fillStyle = '#1a1a1a';
+  tkCtx.shadowBlur = 0;
+  tkCtx.fillText(labelText, center.x, center.y);
+}
+
+// より安定した丸みのある多角形描画
+function drawRoundedPolygon(points, radius, ctx) {
+  if(points.length < 3) {
+    points.forEach((p, i) => {
+      if(i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.closePath();
+    return;
+  }
+
+  ctx.moveTo(
+    points[0].x + (points[1].x - points[0].x) * 0.5,
+    points[0].y + (points[1].y - points[0].y) * 0.5
+  );
+
+  for(let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    const p3 = points[(i + 2) % points.length];
+    
+    // p1からp2への方向
+    const dx1 = p2.x - p1.x;
+    const dy1 = p2.y - p1.y;
+    const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+    
+    // p2からp3への方向
+    const dx2 = p3.x - p2.x;
+    const dy2 = p3.y - p2.y;
+    const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+    
+    // 制御点の距離を調整
+    const r = Math.min(radius, len1 * 0.3, len2 * 0.3);
+    
+    // p2の手前の制御点
+    const cp1x = p2.x - (dx1 / len1) * r;
+    const cp1y = p2.y - (dy1 / len1) * r;
+    
+    // p2の先の制御点
+    const cp2x = p2.x + (dx2 / len2) * r;
+    const cp2y = p2.y + (dy2 / len2) * r;
+    
+    ctx.lineTo(cp1x, cp1y);
+    ctx.quadraticCurveTo(p2.x, p2.y, cp2x, cp2y);
+  }
+  
+  ctx.closePath();
 }
 
 let trucks = [];
 let matchCount = 0;
 let particles = [], offerRings = [], connections = [];
 
-// ======== BidIcon ========
 class BidIcon {
   constructor() {
-    this.scale = 0.0;
-    this.offsetY = 0;
-    this.targetY = -38;
-    this.bounce = 0;
-    this.ready = false;
+    this.scale = 0.0; this.offsetY = 0; this.targetY = -38; this.bounce = 0; this.ready = false;
   }
   update(dt) {
     if(!this.ready) {
@@ -134,68 +601,35 @@ class BidIcon {
     ctx.save();
     ctx.translate(cx, cy + by);
     ctx.scale(this.scale, this.scale);
-
-    // Drop shadow
-    ctx.shadowColor = '#00d4ff';
-    ctx.shadowBlur = 14;
-
-    // Badge
-    ctx.beginPath();
-    ctx.roundRect(-22, -14, 44, 22, 6);
-    ctx.fillStyle = 'rgba(0,30,60,0.95)';
-    ctx.strokeStyle = '#00d4ff';
-    ctx.lineWidth = 1.8;
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.roundRect(-22, -14, 44, 22, 6);
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.strokeStyle = '#FF9800'; ctx.lineWidth = 1.8;
     ctx.fill(); ctx.stroke();
-
-    // Tail
-    ctx.beginPath();
-    ctx.moveTo(-6, 8); ctx.lineTo(6, 8); ctx.lineTo(0, 16);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(0,30,60,0.95)';
-    ctx.fill();
-    ctx.strokeStyle = '#00d4ff'; ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Text
-    ctx.shadowBlur = 0;
-    ctx.font = `bold 10px 'Noto Sans JP'`;
-    ctx.fillStyle = '#00d4ff';
-    ctx.textAlign = 'center';
+    ctx.beginPath(); ctx.moveTo(-6, 8); ctx.lineTo(6, 8); ctx.lineTo(0, 16); ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.fill(); ctx.strokeStyle = '#FF9800'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.shadowBlur = 0; ctx.font = `bold 10px 'Noto Sans JP'`; ctx.fillStyle = '#FF9800'; ctx.textAlign = 'center';
     ctx.fillText('ビッド', 0, 1);
     ctx.restore();
   }
 }
 
-// ======== Truck ========
 class Truck {
   constructor(id) {
-    this.id = id;
-    this.x = Math.random()*W; this.y = Math.random()*H;
+    this.id = id; this.x = Math.random()*W; this.y = Math.random()*H;
     this.targetX = Math.random()*W; this.targetY = Math.random()*H;
     this.speed = 1.2 + Math.random()*0.8;
-    this.state = 'idle'; // idle | bidding | motto | delivering
-    this.offerId = null;
-    this.cargo = false;
-    this.destX = 0; this.destY = 0;
-    this.flashTimer = 0;
+    this.state = 'idle'; this.offerId = null; this.cargo = false;
+    this.destX = 0; this.destY = 0; this.flashTimer = 0;
     this.label = ''; this.labelTimer = 0;
-    this.hasPallet = Math.random()<0.3;
-    this.wanderTimer = 0;
-    this.trail = [];
-    this.bidIcon = null;
-    this.danGlow = 0;
+    this.hasPallet = Math.random()<0.3; this.wanderTimer = 0; this.trail = [];
+    this.bidIcon = null; this.danGlow = 0;
   }
-
   update(dt) {
     const sp = this.speed * SPEED;
     this.trail.push({x:this.x, y:this.y, age:0});
     if(this.trail.length>14) this.trail.shift();
     this.trail.forEach(t=>t.age+=dt*SPEED);
-
-    if(this.bidIcon) {
-      this.bidIcon.update(dt);
-      if(this.state!=='bidding' && this.state!=='motto') this.bidIcon=null;
-    }
+    if(this.bidIcon) { this.bidIcon.update(dt); if(this.state!=='bidding'&&this.state!=='motto') this.bidIcon=null; }
     if(this.danGlow>0) this.danGlow-=dt*SPEED*0.025;
     if(this.labelTimer>0) this.labelTimer-=dt*SPEED;
     if(this.flashTimer>0) this.flashTimer-=dt*SPEED;
@@ -203,228 +637,121 @@ class Truck {
     if(this.state==='idle') {
       this.wanderTimer-=dt*SPEED;
       if(this.wanderTimer<=0) {
-        this.targetX=80+Math.random()*(W-160);
-        this.targetY=80+Math.random()*(H-160);
+        this.targetX=80+Math.random()*(W-160); this.targetY=80+Math.random()*(H-160);
         this.wanderTimer=60+Math.random()*120;
       }
       this.moveToward(this.targetX, this.targetY, sp*0.7);
     }
-
     if(this.state==='bidding') {
       const sh=shippers.find(s=>s.id===this.offerId);
       if(sh) this.moveToward(sh.x, sh.y, sp*1.3);
     }
-
     if(this.state==='delivering') {
       const dist=this.moveToward(this.destX, this.destY, sp*1.1);
       if(dist<20) {
         this.state='idle'; this.cargo=false; this.hasPallet=false;
         this.label='完了'; this.labelTimer=40; this.flashTimer=40;
-        matchCount++;
-        document.getElementById('stat-match').textContent=matchCount;
+        matchCount++; document.getElementById('stat-match').textContent=matchCount;
       }
     }
   }
-
-  startBid(shId) {
-    this.state='bidding'; this.offerId=shId;
-    this.bidIcon=new BidIcon();
-  }
-
+  startBid(shId) { this.state='bidding'; this.offerId=shId; this.bidIcon=new BidIcon(); }
   finalize(shId) {
     const sh=shippers.find(s=>s.id===shId);
     if(sh) { sh.hasOffer=false; sh.offer=null; }
-    this.state='delivering'; this.cargo=true;
-    this.bidIcon=null; this.offerId=null;
-    this.label='ダン！'; this.labelTimer=90; this.flashTimer=90;
-    this.danGlow=1;
+    this.state='delivering'; this.cargo=true; this.bidIcon=null; this.offerId=null;
+    this.label='ダン！'; this.labelTimer=90; this.flashTimer=90; this.danGlow=1;
     this.destX=80+Math.random()*(W-160); this.destY=80+Math.random()*(H-160);
-    for(let i=0;i<12;i++) particles.push(new Particle(this.x,this.y,'#7cfc00'));
-    particles.push(new Particle(this.x,this.y-20,'#7cfc00','ダン！'));
+    for(let i=0;i<12;i++) particles.push(new Particle(this.x,this.y,'#FF9800'));
+    particles.push(new Particle(this.x,this.y-20,'#FF9800','ダン！'));
   }
-
   moveToward(tx,ty,sp) {
     const dx=tx-this.x, dy=ty-this.y, d=Math.sqrt(dx*dx+dy*dy);
     if(d>2) { this.x+=(dx/d)*Math.min(sp,d); this.y+=(dy/d)*Math.min(sp,d); }
     return d;
   }
-
   draw() {
-    // Trail
     this.trail.forEach((t,i)=>{
       const a=(i/this.trail.length)*0.18*(1-t.age/30);
-      if(a>0.01) {
-        ctx.beginPath(); ctx.arc(t.x,t.y,2,0,Math.PI*2);
-        ctx.fillStyle=`rgba(245,166,35,${a})`; ctx.fill();
-      }
+      if(a>0.01) { ctx.beginPath(); ctx.arc(t.x,t.y,2,0,Math.PI*2); ctx.fillStyle=`rgba(30,136,229,${a})`; ctx.fill(); }
     });
-
-    // Dan glow ring
     if(this.danGlow>0) {
       ctx.beginPath(); ctx.arc(this.x,this.y,30*(1-this.danGlow)+8,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(124,252,0,${this.danGlow*0.9})`; ctx.lineWidth=3; ctx.stroke();
+      ctx.strokeStyle=`rgba(255,152,0,${this.danGlow*0.6})`; ctx.lineWidth=2; ctx.stroke();
     }
-
-    // Flash halo
     if(this.flashTimer>0) {
-      const fa=(this.flashTimer/90)*0.35;
-      const fc=this.label==='ダン！'?'124,252,0':this.state==='bidding'?'0,212,255':'245,166,35';
+      const fa=(this.flashTimer/90)*0.25;
+      const fc=this.label==='ダン！'?'255,152,0':this.state==='bidding'?'255,152,0':'30,136,229';
       ctx.beginPath(); ctx.arc(this.x,this.y,30*(1-this.flashTimer/90)+8,0,Math.PI*2);
       ctx.fillStyle=`rgba(${fc},${fa})`; ctx.fill();
     }
-
-    const isBidding=this.state==='bidding';
-    const isMotto=this.state==='motto';
-    const isDan=this.label==='ダン！';
-    const color = isDan?'#7cfc00': isBidding||isMotto?'#00d4ff': this.state==='delivering'?'#f5a623':'#f5a623';
-    const s = isBidding ? 10 : 8;
-
-    ctx.save();
-    ctx.shadowColor=color; ctx.shadowBlur=isBidding?18:10;
-    ctx.fillStyle=color;
-    ctx.beginPath(); ctx.roundRect(this.x-s,this.y-s/2,s*1.5,s,2); ctx.fill();
-    ctx.globalAlpha=this.cargo?1:0.6;
-    ctx.fillRect(this.x-s*2.2,this.y-s/2,s*1.4,s);
-    ctx.globalAlpha=1;
-    ctx.beginPath();
-    ctx.arc(this.x-s*1.8,this.y+s/2+1,3,0,Math.PI*2);
-    ctx.arc(this.x+s*0.3,this.y+s/2+1,3,0,Math.PI*2);
-    ctx.fillStyle='#1a1a2e'; ctx.fill();
-    if(this.hasPallet) {
-      ctx.fillStyle='#a78bfa'; ctx.shadowColor='#a78bfa';
-      ctx.fillRect(this.x-s*2.2,this.y-s*0.9,s*1.4,3);
-    }
-    if(this.cargo&&this.state==='delivering') {
-      ctx.fillStyle='rgba(124,252,0,0.5)';
-      ctx.fillRect(this.x-s*2.2+2,this.y-s/2+2,s*1.4-4,s-4);
-    }
+    const isBidding=this.state==='bidding', isMotto=this.state==='motto', isDan=this.label==='ダン！';
+    const color = isDan?'#FF9800': isBidding||isMotto?'#FF9800': this.state==='delivering'?'#1E88E5':'#1E88E5';
+    const s = isBidding ? 9 : 7;
+    ctx.save(); ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+    ctx.fillStyle=color; ctx.beginPath(); ctx.roundRect(this.x-s,this.y-s/2,s*1.5,s,2); ctx.fill();
+    ctx.globalAlpha=this.cargo?1:0.6; ctx.fillRect(this.x-s*2.2,this.y-s/2,s*1.4,s); ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.arc(this.x-s*1.8,this.y+s/2+1,2.5,0,Math.PI*2); ctx.arc(this.x+s*0.3,this.y+s/2+1,2.5,0,Math.PI*2);
+    ctx.fillStyle='#1a1a1a'; ctx.fill();
+    if(this.hasPallet) { ctx.fillStyle='#a78bfa'; ctx.shadowColor='#a78bfa'; ctx.fillRect(this.x-s*2.2,this.y-s*0.9,s*1.4,2.5); }
+    if(this.cargo&&this.state==='delivering') { ctx.fillStyle='rgba(124,252,0,0.5)'; ctx.fillRect(this.x-s*2.2+2,this.y-s/2+2,s*1.4-4,s-4); }
     ctx.restore();
-
-    ctx.font=`bold 9px 'Share Tech Mono'`;
-    ctx.fillStyle=color;
-    ctx.fillText(`T${this.id+1}`, this.x+s+3, this.y-2);
-
+    ctx.font=`bold 8px 'Share Tech Mono'`; ctx.fillStyle=color; ctx.fillText(`T${this.id+1}`, this.x+s+2, this.y-2);
     if(this.labelTimer>0) {
-      const a=Math.min(1,this.labelTimer/20);
-      const lc=isDan?'#7cfc00':this.label==='完了'?'#7cfc00':'#f5a623';
-      ctx.save(); ctx.globalAlpha=a;
-      ctx.font=`bold 13px 'Noto Sans JP'`;
-      ctx.fillStyle=lc; ctx.shadowColor=lc; ctx.shadowBlur=16;
-      ctx.fillText(this.label, this.x-20, this.y-34);
-      ctx.restore();
+      const a=Math.min(1,this.labelTimer/20), lc=isDan?'#FF9800':this.label==='完了'?'#FF9800':'#FF9800';
+      ctx.save(); ctx.globalAlpha=a; ctx.font=`bold 12px 'Noto Sans JP'`;
+      ctx.fillStyle=lc; ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.fillText(this.label, this.x-18, this.y-30); ctx.restore();
     }
-
     if(this.bidIcon) this.bidIcon.draw(this.x, this.y-8);
   }
 }
 
-// ======== Callout（荷主の吹き出し） ========
 function drawCallout(sh) {
   if(!sh.hasOffer && sh.calloutAlpha<=0.01) return;
-
-  // Alpha animation
-  if(sh.hasOffer && sh.bidderIds.length>0) {
-    sh.calloutAlpha=Math.min(1, sh.calloutAlpha+0.06*SPEED);
-  } else if(!sh.hasOffer) {
-    sh.calloutAlpha=Math.max(0, sh.calloutAlpha-0.04*SPEED);
-  }
+  if(sh.hasOffer && sh.bidderIds.length>0) sh.calloutAlpha=Math.min(1, sh.calloutAlpha+0.06*SPEED);
+  else if(!sh.hasOffer) sh.calloutAlpha=Math.max(0, sh.calloutAlpha-0.04*SPEED);
   if(sh.calloutAlpha<=0.01) return;
-
   const bidders = sh.bidderIds.map(id=>trucks.find(t=>t.id===id)).filter(Boolean);
   if(bidders.length===0) return;
-
-  const rowH=24, headerH=28;
-  const boxW=148, boxH=headerH + bidders.length*rowH + 6;
-  const bx=sh.x-boxW/2, by=sh.y-boxH-28;
-
-  ctx.save();
-  ctx.globalAlpha=sh.calloutAlpha;
-
-  // Shadow/glow
-  ctx.shadowColor='#00d4ff'; ctx.shadowBlur=16;
-
-  // Box
+  const rowH=22, headerH=26, boxW=140, boxH=headerH + bidders.length*rowH + 6;
+  const bx=sh.x-boxW/2, by=sh.y-boxH-26;
+  ctx.save(); ctx.globalAlpha=sh.calloutAlpha;
+  ctx.shadowColor='rgba(255,152,0,0.2)'; ctx.shadowBlur=8;
   ctx.beginPath(); ctx.roundRect(bx,by,boxW,boxH,7);
-  ctx.fillStyle='rgba(3,12,30,0.96)';
-  ctx.strokeStyle='rgba(0,212,255,0.75)'; ctx.lineWidth=1.5;
-  ctx.fill(); ctx.stroke();
-
-  // Callout tail
+  ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.strokeStyle='rgba(255,152,0,0.5)'; ctx.lineWidth=1.5; ctx.fill(); ctx.stroke();
   ctx.shadowBlur=0;
-  ctx.beginPath();
-  ctx.moveTo(sh.x-8, by+boxH-1);
-  ctx.lineTo(sh.x+8, by+boxH-1);
-  ctx.lineTo(sh.x, sh.y-16);
-  ctx.closePath();
-  ctx.fillStyle='rgba(3,12,30,0.96)'; ctx.fill();
-  ctx.strokeStyle='rgba(0,212,255,0.65)'; ctx.lineWidth=1.5; ctx.stroke();
-
-  // Header
-  ctx.font=`bold 10px 'Noto Sans JP'`;
-  ctx.fillStyle='#00d4ff';
-  ctx.fillText('📋  ビッド中のトラック', bx+10, by+17);
-
-  // Divider
+  ctx.beginPath(); ctx.moveTo(sh.x-8, by+boxH-1); ctx.lineTo(sh.x+8, by+boxH-1); ctx.lineTo(sh.x, sh.y-14); ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.fill(); ctx.strokeStyle='rgba(255,152,0,0.5)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.font=`bold 9px 'Noto Sans JP'`; ctx.fillStyle='#FF9800'; ctx.fillText('📋 ビッド中', bx+10, by+16);
   ctx.beginPath(); ctx.moveTo(bx+6,by+headerH-2); ctx.lineTo(bx+boxW-6,by+headerH-2);
-  ctx.strokeStyle='rgba(0,212,255,0.25)'; ctx.lineWidth=1; ctx.stroke();
-
-  // Rows
+  ctx.strokeStyle='rgba(255,152,0,0.2)'; ctx.lineWidth=1; ctx.stroke();
   bidders.forEach((t,i)=>{
-    const ry=by+headerH+i*rowH;
-    const isWinner=sh.winnerId===t.id;
-    const winnerFlashing=isWinner&&sh.danFlash>0;
-    const isMotto=t.state==='motto';
-
-    // Row highlight
+    const ry=by+headerH+i*rowH, isWinner=sh.winnerId===t.id, winnerFlashing=isWinner&&sh.danFlash>0, isMotto=t.state==='motto';
     if(winnerFlashing) {
       const pulse=0.5+0.5*Math.sin(sh.danFlash*0.35);
       ctx.beginPath(); ctx.roundRect(bx+4,ry+1,boxW-8,rowH-2,4);
-      ctx.fillStyle=`rgba(124,252,0,${0.3*pulse})`;
-      ctx.strokeStyle=`rgba(124,252,0,${0.9*pulse})`;
-      ctx.lineWidth=1.5;
-      ctx.shadowColor='#7cfc00'; ctx.shadowBlur=10*pulse;
-      ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
-    } else if(isMotto) {
-      ctx.beginPath(); ctx.roundRect(bx+4,ry+1,boxW-8,rowH-2,4);
-      ctx.fillStyle='rgba(255,107,157,0.12)';
-      ctx.fill();
-    }
-
-    // T id
-    ctx.font=`bold 11px 'Share Tech Mono'`;
-    ctx.fillStyle=winnerFlashing?'#7cfc00': isMotto?'#ff6b9d':'#f5a623';
-    ctx.fillText(`T${t.id+1}`, bx+12, ry+16);
-
-    // Status pill
+      ctx.fillStyle=`rgba(255,152,0,${0.2*pulse})`; ctx.strokeStyle=`rgba(255,152,0,${0.8*pulse})`;
+      ctx.lineWidth=1.5; ctx.shadowColor='#FF9800'; ctx.shadowBlur=8*pulse; ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
+    } else if(isMotto) { ctx.beginPath(); ctx.roundRect(bx+4,ry+1,boxW-8,rowH-2,4); ctx.fillStyle='rgba(255,152,0,0.15)'; ctx.fill(); }
+    ctx.font=`bold 10px 'Share Tech Mono'`; ctx.fillStyle=winnerFlashing?'#FF9800': isMotto?'#FF9800':'#4a5568';
+    ctx.fillText(`T${t.id+1}`, bx+12, ry+15);
     const pillText=winnerFlashing?'ダン！': isMotto?'もっと':'ビッド中';
-    const pillColor=winnerFlashing?'rgba(124,252,0,0.18)': isMotto?'rgba(255,107,157,0.18)':'rgba(0,212,255,0.1)';
-    const pillBorder=winnerFlashing?'rgba(124,252,0,0.8)': isMotto?'rgba(255,107,157,0.7)':'rgba(0,212,255,0.4)';
-    const pillTextColor=winnerFlashing?'#7cfc00': isMotto?'#ff6b9d':'rgba(0,212,255,0.85)';
-
-    ctx.beginPath(); ctx.roundRect(bx+38,ry+5,60,14,4);
-    ctx.fillStyle=pillColor; ctx.strokeStyle=pillBorder; ctx.lineWidth=1;
-    ctx.fill(); ctx.stroke();
-    ctx.font=`9px 'Noto Sans JP'`;
-    ctx.fillStyle=pillTextColor; ctx.textAlign='center';
-    ctx.fillText(pillText, bx+68, ry+15);
-    ctx.textAlign='left';
-
-    // Checkmark winner
+    const pillColor=winnerFlashing?'rgba(255,152,0,0.2)': isMotto?'rgba(255,152,0,0.2)':'rgba(30,136,229,0.15)';
+    const pillBorder=winnerFlashing?'rgba(255,152,0,0.8)': isMotto?'rgba(255,152,0,0.8)':'rgba(30,136,229,0.5)';
+    const pillTextColor=winnerFlashing?'#FF9800': isMotto?'#FF9800':'#1E88E5';
+    ctx.beginPath(); ctx.roundRect(bx+36,ry+4,56,13,4);
+    ctx.fillStyle=pillColor; ctx.strokeStyle=pillBorder; ctx.lineWidth=1; ctx.fill(); ctx.stroke();
+    ctx.font=`8px 'Noto Sans JP'`; ctx.fillStyle=pillTextColor; ctx.textAlign='center';
+    ctx.fillText(pillText, bx+64, ry+13); ctx.textAlign='left';
     if(winnerFlashing) {
-      ctx.font=`bold 14px 'Noto Sans JP'`; ctx.fillStyle='#7cfc00';
-      ctx.shadowColor='#7cfc00'; ctx.shadowBlur=8;
-      ctx.fillText('✓', bx+boxW-22, ry+17);
-      ctx.shadowBlur=0;
+      ctx.font=`bold 13px 'Noto Sans JP'`; ctx.fillStyle='#FF9800';
+      ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.fillText('✓', bx+boxW-20, ry+16);
     }
   });
-
   ctx.restore();
-
-  // Tick dan flash down
   if(sh.danFlash>0) sh.danFlash-=1.2*SPEED;
 }
 
-// ======== Particles ========
 class Particle {
   constructor(x,y,color,text) {
     this.x=x; this.y=y; this.color=color; this.text=text||null;
@@ -435,10 +762,8 @@ class Particle {
   draw() {
     const a=this.life/this.maxLife;
     if(this.text) {
-      ctx.save(); ctx.globalAlpha=a;
-      ctx.font=`bold 15px 'Noto Sans JP'`;
-      ctx.fillStyle=this.color; ctx.shadowColor=this.color; ctx.shadowBlur=14;
-      ctx.fillText(this.text,this.x,this.y); ctx.restore();
+      ctx.save(); ctx.globalAlpha=a; ctx.font=`bold 14px 'Noto Sans JP'`;
+      ctx.fillStyle=this.color; ctx.shadowColor='transparent'; ctx.shadowBlur=0; ctx.fillText(this.text,this.x,this.y); ctx.restore();
     } else {
       ctx.globalAlpha=a; ctx.beginPath(); ctx.arc(this.x,this.y,this.size*a,0,Math.PI*2);
       ctx.fillStyle=this.color; ctx.fill(); ctx.globalAlpha=1;
@@ -452,7 +777,7 @@ class OfferRing {
   draw() {
     if(this.life<=0.01) return;
     ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(0,212,255,${this.life*0.65})`; ctx.lineWidth=2; ctx.stroke();
+    ctx.strokeStyle=`rgba(255,152,0,${this.life*0.5})`; ctx.lineWidth=1.5; ctx.stroke();
   }
 }
 
@@ -463,99 +788,78 @@ class Connection {
     if(this.life<=0.01) return;
     const ex=this.x1+(this.x2-this.x1)*this.progress, ey=this.y1+(this.y2-this.y1)*this.progress;
     ctx.beginPath(); ctx.moveTo(this.x1,this.y1); ctx.lineTo(ex,ey);
-    ctx.strokeStyle=`rgba(0,212,255,${this.life*0.5})`; ctx.lineWidth=1.5;
-    ctx.setLineDash([4,5]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle=`rgba(255,152,0,${this.life*0.5})`; ctx.lineWidth=1.5; ctx.setLineDash([4,5]); ctx.stroke(); ctx.setLineDash([]);
   }
 }
 
 function drawBg() {
-  bgCtx.fillStyle='#0a0e1a'; bgCtx.fillRect(0,0,W,H);
-  for(let x=40;x<W;x+=60) for(let y=40;y<H;y+=60) {
-    bgCtx.beginPath(); bgCtx.arc(x,y,1,0,Math.PI*2);
-    bgCtx.fillStyle='rgba(255,255,255,0.04)'; bgCtx.fill();
+  bgCtx.fillStyle='#ffffff'; bgCtx.fillRect(0,0,W,H);
+  for(let x=40;x<W;x+=50) for(let y=40;y<H;y+=50) {
+    bgCtx.beginPath(); bgCtx.arc(x,y,0.8,0,Math.PI*2); bgCtx.fillStyle='rgba(74,85,104,0.15)'; bgCtx.fill();
   }
-  bgCtx.strokeStyle='rgba(255,255,255,0.035)'; bgCtx.lineWidth=8;
+  bgCtx.strokeStyle='rgba(74,85,104,0.08)'; bgCtx.lineWidth=6;
   ROADS.forEach(r=>{ bgCtx.beginPath(); bgCtx.moveTo(r.x1,r.y1); bgCtx.lineTo(r.x2,r.y2); bgCtx.stroke(); });
   shippers.forEach(sh=>{
-    const g=bgCtx.createRadialGradient(sh.x,sh.y,0,sh.x,sh.y,55);
-    g.addColorStop(0,'rgba(245,166,35,0.07)'); g.addColorStop(1,'rgba(245,166,35,0)');
-    bgCtx.fillStyle=g; bgCtx.beginPath(); bgCtx.arc(sh.x,sh.y,55,0,Math.PI*2); bgCtx.fill();
+    const g=bgCtx.createRadialGradient(sh.x,sh.y,0,sh.x,sh.y,45);
+    g.addColorStop(0,'rgba(30,136,229,0.08)'); g.addColorStop(1,'rgba(30,136,229,0)');
+    bgCtx.fillStyle=g; bgCtx.beginPath(); bgCtx.arc(sh.x,sh.y,45,0,Math.PI*2); bgCtx.fill();
   });
 }
 
 function drawShippers() {
   shippers.forEach(sh=>{
     sh.pulse+=0.03*SPEED;
-    const col=sh.hasOffer?'#00d4ff':'rgba(245,166,35,0.5)';
+    const col=sh.hasOffer?'#FF9800':'#1E88E5';
     ctx.save();
-    ctx.shadowColor=col; ctx.shadowBlur=sh.hasOffer?22:8;
-    ctx.beginPath(); ctx.arc(sh.x,sh.y,8,0,Math.PI*2);
-    ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+    ctx.shadowColor='transparent'; ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(sh.x,sh.y,6,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
     ctx.restore();
-    const pr=12+Math.sin(sh.pulse)*5;
+    const pr=10+Math.sin(sh.pulse)*4;
     ctx.beginPath(); ctx.arc(sh.x,sh.y,pr,0,Math.PI*2);
-    ctx.strokeStyle=sh.hasOffer?'rgba(0,212,255,0.3)':'rgba(245,166,35,0.15)'; ctx.lineWidth=1; ctx.stroke();
-    ctx.font=`10px 'Share Tech Mono'`; ctx.fillStyle='rgba(255,255,255,0.5)';
-    ctx.fillText(sh.name, sh.x+12, sh.y+4);
+    ctx.strokeStyle=sh.hasOffer?'rgba(255,152,0,0.4)':'rgba(30,136,229,0.3)'; ctx.lineWidth=0.8; ctx.stroke();
+    ctx.font=`8px 'Share Tech Mono'`; ctx.fillStyle='#1a1a1a';
+    ctx.fillText(sh.name, sh.x+10, sh.y+3);
   });
 }
 
-// ======== Offer orchestration ========
 function updateOffers(dt) {
   shippers.forEach(sh=>{
     if(sh.hasOffer) return;
     sh.offerTimer-=dt*SPEED;
     if(sh.offerTimer>0) return;
-
     const idleTrucks=trucks.filter(t=>t.state==='idle');
     if(idleTrucks.length===0) { sh.offerTimer=80; return; }
-
-    // Launch offer
     sh.hasOffer=true; sh.offer={price:Math.floor(20000+Math.random()*80000)};
     sh.offerTimer=160+Math.random()*200;
     sh.bidderIds=[]; sh.winnerId=null; sh.calloutAlpha=0; sh.danFlash=0;
-
     for(let i=0;i<3;i++) setTimeout(()=>offerRings.push(new OfferRing(sh.x,sh.y)),i*200);
-
     const bidCount=1+Math.floor(Math.random()*Math.min(3,idleTrucks.length));
     const bidders=idleTrucks.slice(0,bidCount);
-
-    // Staggered bids
     bidders.forEach((t,i)=>{
       setTimeout(()=>{
         if(t.state!=='idle') return;
-        t.startBid(sh.id);
-        sh.bidderIds.push(t.id);
+        t.startBid(sh.id); sh.bidderIds.push(t.id);
         connections.push(new Connection(t.x,t.y,sh.x,sh.y));
       }, i*400/SPEED);
     });
-
-    // After bids settle → pick winner → dan
     const delay=(bidders.length*400+2000)/SPEED;
     setTimeout(()=>{
       const active=trucks.filter(t=>t.state==='bidding'&&t.offerId===sh.id);
       if(active.length===0) return;
-
       const winner=active[Math.floor(Math.random()*active.length)];
-      // Losers idle
       active.forEach(t=>{ if(t!==winner){t.state='idle';t.offerId=null;t.bidIcon=null;} });
       sh.bidderIds=sh.bidderIds.filter(id=>id===winner.id);
-
-      // もっと (35%)
       if(Math.random()<0.35) {
         winner.state='motto'; winner.label='もっと'; winner.labelTimer=100; winner.flashTimer=100;
-        particles.push(new Particle(winner.x,winner.y,'#ff6b9d','もっと'));
+        particles.push(new Particle(winner.x,winner.y,'#FF9800','もっと'));
         setTimeout(()=>{
-          sh.winnerId=winner.id; sh.danFlash=90;
-          winner.finalize(sh.id);
+          sh.winnerId=winner.id; sh.danFlash=90; winner.finalize(sh.id);
           setTimeout(()=>{ sh.bidderIds=[]; }, 2000/SPEED);
         }, 1600/SPEED);
       } else {
         sh.winnerId=winner.id; sh.danFlash=90;
-        setTimeout(()=>{
-          winner.finalize(sh.id);
-          setTimeout(()=>{ sh.bidderIds=[]; }, 2000/SPEED);
-        }, 300/SPEED);
+        setTimeout(()=>{ winner.finalize(sh.id); setTimeout(()=>{ sh.bidderIds=[]; }, 2000/SPEED); }, 300/SPEED);
       }
     }, delay);
   });
@@ -564,15 +868,23 @@ function updateOffers(dt) {
 function updateStats() {
   document.getElementById('stat-trucks').textContent=trucks.filter(t=>t.state!=='idle').length;
   document.getElementById('stat-offers').textContent=shippers.filter(s=>s.hasOffer).length;
+  const totalBases = torikoyaGroups.reduce((sum, tg) => sum + tg.shipperIds.length, 0) + newArea.shipperIds.length;
+  document.getElementById('stat-bases').textContent=totalBases;
+  // ネットワーク数（新エリアがあれば+1）
+  const networkCount = 5 + (newArea.shipperIds.length > 0 ? 1 : 0);
+  document.getElementById('stat-torikoya').textContent=networkCount;
 }
 
 let lastTime=0;
 function loop(ts) {
   const dt=Math.min((ts-lastTime)/16,3); lastTime=ts;
+  tkCtx.clearRect(0,0,W,H);
   ctx.clearRect(0,0,W,H);
 
   trucks.forEach(t=>t.update(dt));
-  offerRings.forEach(r=>r.update()); connections.forEach(c=>c.update()); particles.forEach(p=>p.update());
+  offerRings.forEach(r=>r.update());
+  connections.forEach(c=>c.update());
+  particles.forEach(p=>p.update());
   updateOffers(dt);
 
   offerRings=offerRings.filter(r=>r.life>0.01);
@@ -584,36 +896,92 @@ function loop(ts) {
     if(pt.length) particles.push(new Particle(pt[0].x,pt[0].y-10,'#a78bfa','PACK'));
   }
 
-  connections.forEach(c=>c.draw()); offerRings.forEach(r=>r.draw());
-
+  // 個別のとり小屋を描画
+  torikoyaGroups.forEach(tg=>drawTorikoya(tg));
+  // 新エリアを描画
+  if(newArea.shipperIds.length > 0) {
+    drawTorikoya(newArea);
+  }
+  connections.forEach(c=>c.draw());
+  offerRings.forEach(r=>r.draw());
   trucks.filter(t=>t.state==='delivering').forEach(t=>{
     ctx.beginPath(); ctx.moveTo(t.x,t.y); ctx.lineTo(t.destX,t.destY);
-    ctx.strokeStyle='rgba(124,252,0,0.1)'; ctx.setLineDash([3,8]); ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(124,252,0,0.08)'; ctx.setLineDash([3,8]); ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
   });
-
   drawShippers();
-  shippers.forEach(sh=>drawCallout(sh));   // 吹き出し（トラックの下に描画）
-  trucks.forEach(t=>t.draw());             // トラック（吹き出しの上）
+  shippers.forEach(sh=>drawCallout(sh));
+  trucks.forEach(t=>t.draw());
   particles.forEach(p=>p.draw());
 
-  ctx.font=`10px 'Share Tech Mono'`; ctx.fillStyle='rgba(245,166,35,0.18)';
-  ctx.fillText('手数料 2.5% (荷主のみ) ／ 運送会社: 無料', W/2-110, H-10);
+  ctx.font=`9px 'Share Tech Mono'`; ctx.fillStyle='rgba(45,55,72,0.4)';
+  ctx.fillText('手数料 2.5% (荷主のみ) ／ 運送会社: 無料', W/2-100, H-10);
 
   updateStats();
   requestAnimationFrame(loop);
 }
 
 function init() {
-  resize(); buildRoads(); buildShippers();
-  for(let i=0;i<8;i++) {
-    const t=new Truck(i);
-    t.x=Math.random()*W; t.y=Math.random()*H; t.hasPallet=i<3;
+  resize(); buildRoads(); buildShippers(); buildTorikoyaGroups();
+  for(let i=0;i<12;i++) {
+    const t=new Truck(i); t.x=Math.random()*W; t.y=Math.random()*H; t.hasPallet=i<4;
     trucks.push(t);
   }
+  
+  // 初回ヒント表示
+  setTimeout(() => {
+    const hint = document.getElementById('clickHint');
+    hint.style.opacity = '1';
+    setTimeout(() => {
+      hint.style.opacity = '0';
+    }, 3000);
+  }, 1000);
+  
+  // クリックイベントリスナー
+  canvas.addEventListener('click', handleCanvasClick);
+  
   requestAnimationFrame(loop);
 }
 
-window.addEventListener('resize',()=>{ resize(); buildShippers(); });
+// キャンバスクリックで新拠点追加
+function handleCanvasClick(event) {
+  // 最大拠点数チェック
+  if(newArea.shipperIds.length >= newArea.maxShippers) {
+    return;
+  }
+  
+  // クリック位置を取得
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  
+  // 新しいshipperを作成（IDは既存の最大値+1）
+  const newId = shippers.length;
+  const newShipper = {
+    id: newId,
+    x: x,
+    y: y,
+    name: `新拠点${newArea.shipperIds.length + 1}`,
+    pulse: Math.random() * Math.PI * 2,
+    offerTimer: 60 + Math.random() * 80,
+    hasOffer: false,
+    offer: null,
+    bidderIds: [],
+    winnerId: null,
+    calloutAlpha: 0,
+    danFlash: 0,
+  };
+  
+  shippers.push(newShipper);
+  newArea.shipperIds.push(newId);
+  newArea.joinFlash = 50;
+  
+  // 控えめなパーティクル
+  for(let i=0; i<2; i++) {
+    particles.push(new Particle(x, y, 'rgb(255,152,0)'));
+  }
+}
+
+window.addEventListener('resize',()=>{ resize(); buildShippers(); buildTorikoyaGroups(); });
 init();
 </script>
 </body>
